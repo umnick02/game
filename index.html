@@ -91,36 +91,144 @@ html, body {
 		</script>
 
 		<script type="module" crossorigin="anonymous">
-			let is_mobile = /Mobi/i.test(window.navigator.userAgent);
-			if (is_mobile) {
-				function scrollToSubject() { try { window.scrollTo({top:100, left:0, behavior:'smooth'}); } catch (e) {} }
-				scrollToSubject();
-				window.addEventListener("orientationchange", function () { setTimeout(scrollToSubject, 100); });
-			}
-			document.getElementById('canvas').addEventListener("keydown", function (ev) {
-				ev.preventDefault();
-				ev.stopPropagation();
-			});
-			document.addEventListener("mousedown", (function () {
-				const canvasElement = document.getElementById('canvas');
-				let focused = false;
-				return function (ev) {
-					if (ev.target == canvasElement) {
-						if (!focused) {
-							canvasElement.focus();
-							focused = true;
-						}
-					}
-					else {
-						if (focused) {
-							focused = false;
-						}
-					}
-					return true;
-				}
-			})());
-			import { createWaflash } from 'https://umnick02.github.io/game/waflash-player.min.js?2020121606';
-			createWaflash(document.querySelectorAll('figure a')[0].href);
+
+									let is_mobile = /Mobi/i.test(window.navigator.userAgent);
+									if (is_mobile) {
+										function scrollToSubject() { try { window.scrollTo({top:100, left:0, behavior:'smooth'}); } catch (e) {} }
+										scrollToSubject();
+										window.addEventListener("orientationchange", function () { setTimeout(scrollToSubject, 100); });
+									}
+									else {
+										document.getElementById('canvas').focus();
+									}
+
+									document.onkeydown = null; // disable shortcut
+									document.getElementById('canvas').addEventListener("keydown", function (ev) {
+										ev.preventDefault();
+										ev.stopPropagation();
+									});
+									document.addEventListener("mousedown", (function () {
+										const canvasElement = document.getElementById('canvas');
+										let focused = false;
+										return function (ev) {
+											if (ev.target == canvasElement) {
+												if (!focused) {
+													canvasElement.focus();
+													focused = true;
+												}
+											}
+											else {
+												if (focused) {
+													focused = false;
+												}
+											}
+											return true;
+										}
+									})());
+
+									function processFileblock() {
+										try {
+											const o = window.wafOptions = window.wafOptions || {};
+											// const o = window.wafOptionsV2 = Object.assign({}, window.wafOptions);
+											if (true || o.enableAutoResourceMap) {
+												o.resourceMap = Array.isArray(o.resourceMap) ? o.resourceMap : Object.entries(o.resourceMap || {});
+												o.resourceMap = o.resourceMap.concat(Array.isArray(window.wafResourceMap) ? window.wafResourceMap : Object.entries(window.wafResourceMap || {}));
+												const ar = document.querySelectorAll('figure.fileblock > a[href]');
+												const re = /^https:\/\/blog\.kakaocdn\.net\/dn\/(\w+)\/(\w+)\/(\w+)\/(.+)\?attach=1&knm=.+$/;
+												let i = ar.length == 1 ? 1 : 0;
+												for (; i<ar.length; i++) {
+														const a = ar[i];
+														const r = re.exec(a.href);
+													  if (r) {
+															// v1
+															o.resourceMap.push([ `~^.*/${decodeURI(r[4])}(\\?.*)?$`, a.href ]);
+														}
+													  else {
+															// v2
+															const filename = a.querySelector('div.desc div.filename span.name');
+															filename && filename.innerText && (o.resourceMap.push([ `~^.*/${decodeURI(filename.innerText)}(\\?.*)?$`, a.href ]));
+														}
+												}
+											}
+										} catch(e) {}
+									}
+
+									// 2021.12.08 changed
+									function processFileblock_v2() {
+										try {
+											const o = window.wafOptions = window.wafOptions || {};
+											// const o = window.wafOptionsV2 = Object.assign({}, window.wafOptions);
+											if (true || o.enableAutoResourceMap) {
+												o.resourceMap = Array.isArray(o.resourceMap) ? o.resourceMap : Object.entries(o.resourceMap || {});
+												o.resourceMap = o.resourceMap.concat(Array.isArray(window.wafResourceMap) ? window.wafResourceMap : Object.entries(window.wafResourceMap || {}));
+												const ar = document.querySelectorAll('figure.fileblock > a[href]');
+												let i = ar.length == 1 ? 1 : 0;
+												for (; i<ar.length; i++) {
+														const a = ar[i];
+													  const filename = a.querySelector('div.desc div.filename span.name');
+														filename && filename.innerText && (o.resourceMap.push([ `~^.*/${decodeURI(filename.innerText)}(\\?.*)?$`, a.href ]));
+												}
+											}
+										} catch(e) { }
+									}
+
+									processFileblock();
+
+									// resize
+									const defaultSetScreenSizeHandler = function(w, h) {
+										let desiredWidth = parseInt(w) || 0;
+										let desiredHeight = parseInt(h) || 0;
+										if (desiredWidth <= 0 || desiredHeight <= 0) {
+											console.warn('invalid width/height!');
+											return;
+										}
+
+										const c = document.getElementById('canvas');
+										if (screen.width > (desiredWidth * 1.1)) {
+											c.style.width = desiredWidth + 'px';
+											c.style.minWidth = c.style.maxWidth = c.style.width;
+										}
+										if (screen.height > (desiredHeight * 1.25)) {
+											c.style.height = desiredHeight + 'px';
+											c.style.minHeight = c.style.maxHeight = c.style.height;
+										}
+									}
+
+									const defaultSetScreenSizeHandler_max = function(w, h) {
+										let desiredWidth = parseInt(w) || 0;
+										let desiredHeight = parseInt(h) || 0;
+										if (desiredWidth < 0 || desiredHeight < 0) {
+											console.warn('invalid width/height!');
+											return;
+										}
+
+										const c = document.getElementById('canvas');
+										if (desiredWidth > 0 && screen.width > (desiredWidth * 1.1)) {
+											c.style.width = '100%';
+											c.style.maxWidth = desiredWidth + 'px';
+										}
+										if (desiredHeight > 0 && screen.height > (desiredHeight * 1.25)) {
+											c.style.height = '100%';
+											c.style.maxHeight = desiredHeight + 'px';
+											c.style.minHeight = c.style.maxHeight;
+										}
+									}
+
+									{
+										let size = window.wafOptions.size;
+										if (size) {
+											if (typeof size == 'function')
+												size();
+											else if (size.maxWidth || size.maxHeight)
+												defaultSetScreenSizeHandler_max(size.maxWidth, size.maxHeight);
+											else
+												defaultSetScreenSizeHandler(size.width, size.height);
+										}
+									}
+
+									import { createWaflash } from 'https://umnick02.github.io/game/waflash-player.min.js??2022012701';
+									createWaflash(document.querySelectorAll('figure.fileblock a')[0].href, window.wafOptions || {});
+
 		</script>
 
 	</div>
