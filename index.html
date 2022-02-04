@@ -15,18 +15,21 @@ html, body {
     padding: 0;
     overflow: hidden;
     background: #181818;
-}
-	
-#waflashContainer {
-    position: absolute;
+    font-family: Arial;
 }
 .entry-content {
+    overflow: auto;
     width: 100%;
     height: 100%;
+    display: table;
     position: absolute;
     top: 0;
     left: 0;
-    overflow: auto;
+}
+#waflashContainer {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
 }
 .waflashCanvas {
     padding-right: 0;
@@ -61,6 +64,7 @@ html, body {
 <body>
 <div class="entry-content">
 	
+	<h1 style="color: #c7c7c7">Waflash Demo 2</h1>
 	<figure style="display: none"><a href="https://sithisdev.github.io/Waflash/ageofwar.swf"></a></figure>
 	
 	<div id="waflashContainer" style="border: 0px solid #1e1f21;">
